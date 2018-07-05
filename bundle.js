@@ -3,19 +3,26 @@
     const [fn, mapping] = modules[id];
 
     function localRequire(name) {
+      // NOTE: @eg mapping = { './message.js': 1 }, name = './message.js'
       return require(mapping[name]);
     }
 
+    // NOTE: always creating module.exports for top level, node module compatibility ?!
     const module = { exports: {} };
 
+    // NOTE: sends {localRequire}, which requires by filename rather than by id.
+    // NOTE: sends {module}, why?!
+    // NOTE: sends {exports}, for attaching exports, `exports.someString = `, `exports.default =`
     fn(localRequire, module, module.exports);
 
     return module.exports;
   }
 
+  // NOTE: initial call, start point, entry
   require(0);
 })({
   0: [
+    // entry.js
     function(require, module, exports) {
       "use strict";
 
@@ -29,9 +36,10 @@
 
       console.log(_message2.default);
     },
-    { "./message.js": 1 }
+    { "./message.js": 1 } // mapping
   ],
   1: [
+    // message.js
     function(require, module, exports) {
       "use strict";
 
@@ -46,6 +54,7 @@
     { "./name.js": 2 }
   ],
   2: [
+    // name.js, constant export
     function(require, module, exports) {
       "use strict";
 
