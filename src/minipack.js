@@ -26,19 +26,29 @@
  * and others are skipped to make this example as simple as possible.
  */
 
-const fs = require('fs');
-const path = require('path');
-const babylon = require('babylon');
-const traverse = require('babel-traverse').default;
-const {transformFromAst} = require('babel-core');
+const fs = require("fs");
+const path = require("path");
+const babylon = require("babylon");
+const traverse = require("babel-traverse").default;
+const { transformFromAst } = require("babel-core");
 
 let ID = 0;
-// NOTE: @return { id, filename, dependencies, code };
+// NOTE: @param {filename}, e.g. "./example/entry.js"
+// NOTE: @return <Asset> = { id, filename, dependencies, code } e.g.
+//{
+//  id: 0,
+//   filename: "./example/entry.js",
+//   dependencies: Array(1),
+//   code: ""use strict";↵↵var _message = require("./message.j…efault: obj }; }↵↵console.log(_message2.default);"},
+//   mapping: <comes later>
+// }
+// NOTE: end of e.g.
 // We start by creating a function that will accept a path to a file, read
 // its contents, and extract its dependencies.
 function createAsset(filename) {
+  // NOTE: @return {content} - Actual code in string
   // Read the content of the file as a string.
-  const content = fs.readFileSync(filename, 'utf-8');
+  const content = fs.readFileSync(filename, "utf-8");
 
   // Now we try to figure out which files this file depends on. We can do that
   // by looking at its content for import strings. However, this is a pretty
@@ -52,8 +62,9 @@ function createAsset(filename) {
   //
   // The AST contains a lot of information about our code. We can query it to
   // understand what our code is trying to do.
+  // NOTE: @return { ast } - Ast tree node.
   const ast = babylon.parse(content, {
-    sourceType: 'module',
+    sourceType: "module"
   });
 
   // This array will hold the relative paths of modules this module depends on.
@@ -66,10 +77,11 @@ function createAsset(filename) {
     // that you can't import a variable, or conditionally import another module.
     // Every time we see an import statement we can just count its value as a
     // dependency.
-    ImportDeclaration: ({node}) => {
+    ImportDeclaration: ({ node }) => {
       // We push the value that we import into the dependencies array.
+      // NOTE: discover all import declarations node's path (source.value), e.g. "./message.js"
       dependencies.push(node.source.value);
-    },
+    }
   });
 
   // We also assign a unique identifier to this module by incrementing a simple
@@ -83,8 +95,9 @@ function createAsset(filename) {
   // The `presets` option is a set of rules that tell Babel how to transpile
   // our code. We use `babel-preset-env` to transpile our code to something
   // that most browsers can run.
-  const {code} = transformFromAst(ast, null, {
-    presets: ['env'],
+  // NOTE: transform with {babel-core.transformFromAst} to again String Code, e.g.  "\"use strict\";var _message = require..."
+  const { code } = transformFromAst(ast, null, {
+    presets: ["env"]
   });
 
   // Return all information about this module.
@@ -92,7 +105,7 @@ function createAsset(filename) {
     id,
     filename,
     dependencies,
-    code,
+    code
   };
 }
 
@@ -124,6 +137,8 @@ function createGraph(entry) {
     // This is the directory this module is in.
     const dirname = path.dirname(asset.filename);
 
+    // NOTE: adding dependencies as <Asset> to {queue}, and their ids to {asset.mapping}
+    // TODO: are we just assuming all dependencies are relative here?
     // We iterate over the list of relative paths to its dependencies.
     asset.dependencies.forEach(relativePath => {
       // Our `createAsset()` function expects an absolute filename. The
@@ -162,8 +177,9 @@ function createGraph(entry) {
 // That function will receive just one parameter: An object with information
 // about every module in our graph.
 function bundle(graph) {
-  let modules = '';
+  let modules = "";
 
+  // NOTE: iterate graph(all Assets) and build a dictionary String fragment with `[id]: [Actual Code]`
   // Before we get to the body of that function, we'll construct the object that
   // we'll pass to it as a parameter. Please note that this string that we're
   // building gets wrapped by two curly braces ({}) so for every module, we add
@@ -241,7 +257,11 @@ function bundle(graph) {
   return result;
 }
 
-const graph = createGraph('./example/entry.js');
+debugger;
+// NOTE: @return {<Array>Asset}
+const graph = createGraph("./example/entry.js");
+debugger;
+
 const result = bundle(graph);
 
 console.log(result);
