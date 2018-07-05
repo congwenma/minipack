@@ -33,7 +33,7 @@ const traverse = require('babel-traverse').default;
 const {transformFromAst} = require('babel-core');
 
 let ID = 0;
-
+// NOTE: @return { id, filename, dependencies, code };
 // We start by creating a function that will accept a path to a file, read
 // its contents, and extract its dependencies.
 function createAsset(filename) {
